@@ -1,9 +1,11 @@
 package org.example.flash_cards;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -12,12 +14,22 @@ import java.util.List;
 @Service
 public class FileService {
 
-    private EntryRepository entryRepository;
-    @Value("${org.example.flash_cards.SaveFile}")
+    private final EntryRepository entryRepository;
+
+    @Value("${pl.edu.pja.tpo02.filename}")
     private String fileName;
 
     public FileService(EntryRepository entryRepository) {
         this.entryRepository = entryRepository;
+    }
+
+    @PostConstruct
+    public void init() {
+        try {
+            loadFromFile();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void loadFromFile() throws IOException {
@@ -30,13 +42,15 @@ public class FileService {
     }
 
     public void saveToFile() throws IOException {
-        List<Entry> entries = entryRepository.findAll();
-
-        List<String> lines = entries.stream()
-                .map(e -> e.getPolish() + "," + e.getEnglish() + "," + e.getGerman())
-                .toList();
-
-        Files.write(Paths.get(fileName), lines);
+        try(FileWriter writer = new FileWriter(fileName)){
+            for (Entry entry : entryRepository.findAll()) {
+                writer.write(entry.getEnglish() + "," + entry.getGerman() + "," + entry.getPolish());
+                writer.write(System.lineSeparator());
+            }
+        }catch (IOException e) {
+            throw new RuntimeException("Error occurred while saving file", e);
+        }
     }
+
 
 }

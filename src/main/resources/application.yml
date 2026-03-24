@@ -1,0 +1,10 @@
+
+spring:
+  application:
+    name: Flash_Cards
+  profiles:
+    active: normal
+  banner:
+    location: classpath:logo-app
+    mode: console
+
